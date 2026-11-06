@@ -66,7 +66,7 @@ window.addEventListener('error',function(event){var box=document.getElementById(
 
 <div class="field"><label for="height">ส่วนสูง (ซม.)</label><input id="height" type="number" min="0" max="300" step="0.1"></div><div class="field"><label for="weight">น้ำหนัก (กก.)</label><input id="weight" type="number" min="0" max="500" step="0.1"></div>
 <div class="field"><label for="fat">ไขมันร่างกาย (%)</label><input id="fat" type="number" min="0" max="100" step="0.1"></div><div class="field"><label for="visceral">ไขมันช่องท้อง</label><input id="visceral" type="number" min="0" max="100" step="0.1"></div>
-<div class="field"><label for="bmrMode">ที่มาของ BMR</label><select id="bmrMode"><option value="auto">คำนวณจากเพศ อายุ ส่วนสูง น้ำหนัก</option><option value="manual">ใช้ค่าที่ตรวจวัด / กรอกเอง</option></select></div><div class="field"><label for="dailyActivity">กิจวัตรประจำวัน (ไม่รวมการออกกำลังกาย)</label><select id="dailyActivity"><option value="">เลือกกิจวัตรเพื่อคำนวณ TDEE</option><option value="1.4">นั่งเป็นหลัก</option><option value="1.6">ยืน / เดินบ่อย</option><option value="1.8">ทำงานใช้แรงมาก</option></select></div><div class="field"><label for="rm">BMR / พลังงานพื้นฐาน (kcal/วัน)</label><input id="rm" type="number" min="0" max="10000"></div><div class="field"><label for="bmi">BMI (คำนวณให้ได้)</label><input id="bmi" type="number" min="0" max="100" step="0.1" placeholder="อัตโนมัติ / กรอกเอง"></div>
+<div class="field"><label for="bmrMode">ที่มาของ BMR</label><select id="bmrMode"><option value="auto">คำนวณจากเพศ อายุ ส่วนสูง น้ำหนัก</option><option value="manual" selected>ใช้ค่าที่ตรวจวัด / กรอกเอง</option></select></div><div class="field"><label for="dailyActivity">กิจวัตรประจำวัน (ไม่รวมการออกกำลังกาย)</label><select id="dailyActivity"><option value="">เลือกกิจวัตรเพื่อคำนวณ TDEE</option><option value="1.4">นั่งเป็นหลัก</option><option value="1.6">ยืน / เดินบ่อย</option><option value="1.8">ทำงานใช้แรงมาก</option></select></div><div class="field"><label for="rm">BMR / RM จากเครื่องวัด (kcal/วัน)</label><input id="rm" type="number" min="0" max="10000"></div><div class="field"><label for="bmi">BMI (คำนวณให้ได้)</label><input id="bmi" type="number" min="0" max="100" step="0.1" placeholder="อัตโนมัติ / กรอกเอง"></div>
 <div class="field"><label for="bodyage">อายุเซลล์ / อายุร่างกาย</label><input id="bodyage" type="number" min="0" max="150"></div>
 </div><p id="energyNote" class="hint" role="status"></p><details class="hint"><summary>วิธีคำนวณพลังงาน</summary>BMR เป็นค่าประมาณพลังงานขณะพักจากสูตร Mifflin–St Jeor สำหรับผู้ใหญ่ หรือใช้ค่าที่กรอกเอง TDEE ≈ BMR × ตัวคูณกิจวัตร + พลังงานออกกำลังกายสุทธิเฉลี่ยต่อวัน เมื่อเลือกหลายกิจกรรมจะเฉลี่ยความหนักเท่า ๆ กันตามเวลารวมที่ระบุ โดยใช้ (MET − 1) × 3.5 × น้ำหนัก ÷ 200 × นาที × ครั้งต่อสัปดาห์ ÷ 7 ตัวคูณกิจวัตรเป็นสมมติฐานโดยประมาณและไม่รวมช่วงออกกำลังกาย ไม่สามารถรับรองความแม่นยำเฉพาะบุคคลได้ <a href="https://pubmed.ncbi.nlm.nih.gov/2305711/" target="_blank" rel="noopener">สูตรพลังงานขณะพัก</a> · <a href="https://pacompendium.com/adult-compendium/" target="_blank" rel="noopener">ตาราง MET ของกิจกรรม</a></details><h2>04 · ไขมันและกล้ามเนื้อแยกส่วน</h2><div class="fields" id="segmentFields"></div>
 <h2>05 · สัดส่วนร่างกาย</h2><div class="fields" id="sizeFields"></div>
@@ -122,6 +122,11 @@ function addDetailPages(detail){
 const cardPageNumber=panels.length+1;
 const previewPage=addPage('การ์ดสุขภาพ');const preview=document.querySelector('aside.preview');preview.classList.remove('box','preview');preview.classList.add('card-page');previewPage.append(preview);previewPage.append(saveActions);
 [method,storage].filter(Boolean).forEach(addDetailPages);
+// Machine BMR and body measurements come before the results page, so TDEE uses the measured BMR.
+function movePanel(page,toIndex,title){const from=panels.indexOf(page);panels.splice(from,1);pageTitles.splice(from,1);panels.splice(toIndex,0,page);pageTitles.splice(toIndex,0,title);page.querySelector('h2').textContent=title;}
+movePanel(document.getElementById('rm').closest('.step-panel'),2,'BMR / RM จากเครื่องวัด');
+movePanel(document.getElementById('bodyFatPercent').closest('.step-panel'),3,'ผลตรวจร่างกาย');
+panels.forEach(page=>form.insertBefore(page,wizardActions));
 // Keep feedback visible on every page, including after import and export.
 form.append(document.getElementById('status'));
 nav.innerHTML='<div id="pageCounter" aria-live="polite"></div><label for="pageJump">ไปที่หน้า</label><select id="pageJump" aria-label="เลือกหน้าข้อมูล"></select>';
@@ -176,7 +181,7 @@ if(!(duration>0&&duration<=1000))missing.push('เลือกเวลาที
 if(chosen.length&&chosen.every(key=>mets[key])&&duration>0){const mean=chosen.reduce((sum,key)=>sum+mets[key],0)/chosen.length;extra=(mean-1)*3.5*w/200*duration*frequency/7;}
 }
 if(v('exercise')!==''&&(!Number.isFinite(frequency)||frequency<0||frequency>30))missing.push('เลือกจำนวนครั้งออกกำลังกายให้ถูกต้อง');
-if(!b||b<0)missing.push('อายุ เพศ ส่วนสูง และน้ำหนัก (คำนวณอัตโนมัติสำหรับอายุ 19–78 ปี)');
+if(!b||b<0)missing.push(v('bmrMode')==='manual'?'ค่า BMR / RM จากเครื่องวัด':'อายุ เพศ ส่วนสูง และน้ำหนัก (คำนวณอัตโนมัติสำหรับอายุ 19–78 ปี)');
 if(!factor)missing.push('กิจวัตรประจำวัน');
 if(!w||w<0)missing.push('น้ำหนัก');
 if(v('exercise')==='')missing.push('เลือกจำนวนครั้งออกกำลังกายต่อสัปดาห์');
